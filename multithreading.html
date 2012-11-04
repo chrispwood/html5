@@ -1,0 +1,89 @@
+<!--
+  Web Worker Example - spawns a web worker on a separate thread
+  author: Chris Wood
+  date: April 2, 2012
+ -->
+<html>
+
+<head>
+  <title>
+    Web Worker Example -- demonstrating the multi-threaded character of web workers
+  </title>
+  <script type="text/javascript" src="fibonacci.js"></script>
+  <script type="text/javascript">
+    var intervalId;
+    var intervalCount = 0;
+    var startTime;
+    var worker;
+
+    function runFibonacci() {
+      var numIterations = document.myForm.numberIterations.value;
+
+      // Create web worker
+      if(worker==undefined || worker==null) {
+        var worker = new Worker('fibonacci.js');
+        // Since the web worker uses json message, register for the message event listener
+        worker.addEventListener('message', workerCallback, false);
+      }
+
+      startTime = (new Date).getTime();
+      document.getElementById("timingLabel").innerHTML = "Started calculating at: " + startTime;
+      document.getElementById("resultsLabel").innerHTML = "";
+      document.getElementById("runningLabel").innerHTML = "";
+
+      /** If the web worker is truly multi-threaded, then this should work seemlessly
+        * i.e. the interval updates should never misfire
+        */
+      intervalId = setInterval(interimFunc,60);
+
+      // Start the webworker
+      worker.postMessage({'command':'idle','count':numIterations});
+    }
+
+    /**
+      * When the web worker completes, it passes a message back to the document
+      */
+    function workerCallback(msg) {
+      document.getElementById("resultsLabel").innerHTML = "Value: " + msg.data.value;
+
+      var finishTime = (new Date).getTime();
+      document.getElementById("timingLabel").innerHTML = document.getElementById("timingLabel").innerHTML + "<br>Completed calculating at: " + finishTime;
+      document.getElementById("timingLabel").innerHTML = document.getElementById("timingLabel").innerHTML + "<br>Time Elapsed: " + Math.floor((finishTime-startTime)/1000) + " seconds";
+      document.getElementById("runningLabel").innerHTML = "";
+    }
+
+    /**
+      * The timer function. If the web worker does in fact run on a separate thread, 
+      * then this will not misfire
+      */
+    function interimFunc() {
+      if(document.getElementById("resultsLabel").innerHTML.length==0) {
+        var intervalString = '';
+        for(var i=0; i<intervalCount; i++) {
+          intervalString += '.';
+        }
+        document.getElementById("runningLabel").innerHTML = "Waiting idly" + intervalString;
+        intervalCount++;
+        if(intervalCount>=60) {
+          intervalCount = 0;
+        }
+      }
+      else {
+        clearInterval(intervalId);
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <form name="myForm">
+    Fibonacci Sequence:<br>
+    Iterations: <input type="text" name="numberIterations" value="5"><br>
+    <input type="button" value="Run" onclick="runFibonacci();"><br><br>
+    <label id="timingLabel"></label><br>
+    <label id="runningLabel"></label><br>
+    <label id="resultsLabel"></label>
+  </form>
+</body>
+
+</html>

@@ -1,0 +1,71 @@
+<!--
+  Web Worker Example - this page profiles the cost to pass data from a worker to the parent
+  author: Chris Wood
+  date: April 4, 2012
+ -->
+<html>
+
+<head>
+  <title>
+    Web Worker Example -- analyzing the cost to share worker memory with the parent
+  </title>
+  <script type="text/javascript" src="dataSharingProfilerWorker.js"></script>
+  <script type="text/javascript">
+    var worker;
+    var functions = [
+      'kb',
+      'mb',
+      'tenMb',
+      'hundredMb',
+      'twoHundredMb',
+      'gb'
+    ];
+
+    function runProfiler() {
+      if(worker==undefined || worker==null) {
+        worker = new Worker('dataSharingProfilerWorker.js');
+        worker.addEventListener('message',workerCallback,false);
+      }
+
+      iterator = 0;
+      runWorker();
+    }
+
+    function runWorker() {
+      document.getElementById("runningLabel").innerHTML = "generating " + functions[iterator] + " memory...<br>";
+      worker.postMessage({'command':functions[iterator]});
+    }
+
+    function workerCallback(msg) {
+      if(msg.data.msg!=undefined) {
+        document.getElementById("runningLabel").innerHTML = document.getElementById("runningLabel").innerHTML + 
+          "<br>" + msg.data.msg;
+      }
+      else {
+        var startTime = msg.data.time;
+        var finishTime = (new Date).getTime();
+        var diff = Math.round((finishTime - startTime)/1000);
+
+        document.getElementById("resultsLabel").innerHTML = document.getElementById("resultsLabel").innerHTML +
+          "Completed passing " + functions[iterator] + " memory (" + msg.data.data.length + " integers) in " + diff + " seconds.<br>";
+
+        iterator++;
+        if(iterator<functions.length) {
+          runWorker();
+        }
+      }
+    }
+
+  </script>
+</head>
+
+<body>
+  <form name="myForm">
+    Memory Profiler: analyzes the processing cost associated with passing memory from the worker to the parent<br>
+    <input type="button" value="Run" onclick="runProfiler();"><br><br>
+    <label id="runningLabel"></label><br>
+    <label id="resultsLabel"></label>
+  </form>
+</body>
+
+</html>
