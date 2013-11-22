@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Basic Shapes Test</title>
+<script src="modernizr.js"></script>
+<script src="debugger.js"></script>
+<script type="text/javascript">
+window.addEventListener("load", eventWindowLoaded, false);
+
+// initialize the canvas
+exampleApp = null;
+
+// initialize the image
+var funPic = new Image();
+funPic.addEventListener('load', funPicLoaded, false);
+funPic.src = "AS_DannyComputer.JPG";
+var picSizes = [200,149];
+var sizeMultiplier = 1.0;
+
+function eventWindowLoaded() {
+  exampleApp = new CanvasApp();
+
+  var rotateButton = document.getElementById("rotateClockImageButton");
+  rotateButton.addEventListener('click',exampleApp.rotateImageClockwise,false);
+  rotateButton = document.getElementById("rotateCounterImageButton");
+  rotateButton.addEventListener('click',exampleApp.rotateImageCounterClockwise,false);
+
+  var increaseButton = document.getElementById("increaseButton");
+  increaseButton.addEventListener('click',exampleApp.increaseImageSize,false);
+  var increaseButton = document.getElementById("decreaseButton");
+  increaseButton.addEventListener('click',exampleApp.decreaseImageSize,false);
+}
+
+function canvasSupport() {
+  return Modernizr.canvas;
+}
+
+function funPicLoaded() {
+  if(exampleApp) {
+    exampleApp.drawScreen();
+  }
+}
+
+function CanvasApp() {
+  // holds the current outer scope
+  var that = this;
+  var shapesCanvas = document.getElementById("shapesCanvas");
+  var context = shapesCanvas.getContext("2d");
+  var rotation = 0;
+
+  if(!canvasSupport()) {
+    return;
+  }
+
+  function drawBorder() {
+    context.strokeRect(0,0,700,300);
+  }
+
+  function drawImage() {
+    context.drawImage(funPic,0,0,picSizes[0]*sizeMultiplier,picSizes[1]*sizeMultiplier);
+  }
+  
+  function drawAnnotations() {
+    // yash annotation
+    context.strokeStyle = '#000000';
+    context.lineWidth = 2;
+    context.strokeRect(30,50,25*sizeMultiplier,28*sizeMultiplier);
+  }
+
+  function initCanvas() {
+    that.drawScreen();
+  }
+
+  function doTransform() {
+    context.save();
+    context.setTransform(1,0,0,1,0,0);
+    context.translate(10,10);
+    var radians = rotation * Math.PI / 180;
+    context.rotate(radians);
+    if(rotation==90) {
+      context.translate(0,-150);
+    }
+    else if(rotation==180) {
+      context.translate(-200,-150);
+    }
+    else if(rotation==270) {
+      context.translate(-200,0);
+    }
+  }
+
+  function doRestore() {
+    context.restore();
+  }
+
+  function clearScreen() {
+    context.clearRect(0,0,700,300);
+  }
+
+  this.drawScreen = function() {
+    clearScreen();
+    drawBorder();
+    doTransform();
+    drawImage();
+    drawAnnotations();
+    doRestore();
+  }
+
+  this.rotateImageClockwise = function() {
+    rotation += 90;
+    if(rotation>=360) {
+      rotation -= 360;
+    }
+    that.drawScreen();
+  }
+
+  this.rotateImageCounterClockwise = function() {
+    rotation -= 90;
+    if(rotation<0) {
+      rotation += 360;
+    }
+    that.drawScreen();
+  }
+
+  this.increaseImageSize = function() {
+    // stubbed
+    sizeMultiplier += 0.5;
+    that.drawScreen();
+  }
+
+  this.decreaseImageSize = function() {
+    // stubbed
+    if(sizeMultiplier>=0.5) {
+      sizeMultiplier -= 0.5;
+    }
+    that.drawScreen();
+  }
+
+  // setup the canvas with a 2d context
+  /*
+  var shapesCanvas = document.getElementById("shapesCanvas");
+  var context = shapesCanvas.getContext("2d");
+  */
+  initCanvas();
+}
+
+</script>
+</head>
+
+<body>
+  <div style="position:absolute; top: 50px; left: 50px;">
+    <canvas id="shapesCanvas" width="700" height="300">
+    Your Browser does not support the HTML5 Canvas.
+    </canvas>
+  </div>
+  <div style="position:absolute; top: 360px; left: 50px;">
+    <button id="rotateClockImageButton" type="button">Rotate Clockwise</button>
+    <button id="rotateCounterImageButton" type="button">Rotate Counter-Clockwise</button>
+    <button id="increaseButton" type="button">Increase Image Size</button>
+    <button id="decreaseButton" type="button">Decrease Image Size</button>
+  </div>
+</body>
+
+</html>
